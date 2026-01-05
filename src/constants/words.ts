@@ -1,0 +1,31 @@
+export const WORDS = [
+    'APPLE',
+    'BEACH',
+    'CLOUD',
+    'DRINK',
+    'EAGLE',
+    'FRUIT',
+    'GRAPE',
+    'HEART',
+    'IGLOO',
+    'JUICE',
+    'KITE',
+    'LEMON',
+    'MOUSE',
+    'NIGHT',
+    'OCEAN',
+    'PIANO',
+    'QUEEN',
+    'RIVER',
+    'SNAKE',
+    'TIGER',
+    'UMBRA',
+    'VOICE',
+    'WATER',
+    'XENON',
+    'YACHT',
+    'ZEBRA',
+];
+
+export const WORD_LENGTH = 5;
+export const MAX_CHALLENGES = 6;
