@@ -1,4 +1,4 @@
-# Wordle Clone
+# Lettr (Wordle Clone)
 
 A premium, mobile-first Wordle clone built with **React Native (Expo)** and **Supabase**.
 
