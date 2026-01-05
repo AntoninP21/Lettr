@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
-import { checkGuess, getWord, Guess, isWordInList, LetterStatus, MAX_CHALLENGES, UsedKeys, WORD_LENGTH } from '../utils/wordle';
+import { checkGuess, Guess, isWordInList, LetterStatus, MAX_CHALLENGES, UsedKeys, WORD_LENGTH } from '../utils/wordle';
 
-const useWordle = () => {
-    const [solution, setSolution] = useState<string>(getWord());
+const useWordle = (solution: string, validWords: string[], onMessage: (msg: string) => void) => {
+    // solution is now passed in
     const [turn, setTurn] = useState<number>(0);
     const [currentGuess, setCurrentGuess] = useState<string>('');
     const [guesses, setGuesses] = useState<Guess[]>([]); // Formatted guesses
@@ -57,28 +56,23 @@ const useWordle = () => {
         if (key === 'ENTER') {
             // Only add guess if turn is less than 5
             if (turn > MAX_CHALLENGES) {
-                console.log('you used all your guesses');
                 return;
             }
             // Do not allow duplicate words
             if (history.includes(currentGuess)) {
-                console.log('you already tried that word');
+                onMessage('You already tried that word.');
                 return;
             }
             // Check word is 5 chars long
             if (currentGuess.length !== WORD_LENGTH) {
-                console.log('word must be 5 chars long');
+                onMessage('Word must be 5 chars long.');
                 return;
             }
             // Check if word is in list
-            /* 
-             Optional: For now, we only check length. 
-             Uncomment below if strict checking is needed
-            if (!isWordInList(currentGuess)) {
-               console.log('not a valid word');
-               return;
+            if (!isWordInList(currentGuess, validWords)) {
+                onMessage('Word not found in dictionary.');
+                return;
             }
-            */
 
             const formatted = formatGuess();
             addNewGuess(formatted);

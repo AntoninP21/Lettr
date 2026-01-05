@@ -12,8 +12,8 @@ const HomeScreen = ({ navigation }: any) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>WORDLE</Text>
-            <Text style={styles.subtitle}>Clone</Text>
+            <Text style={styles.title}>Lettr</Text>
+            <Text style={styles.subtitle}>a wordle clone</Text>
 
             <TouchableOpacity
                 style={styles.button}

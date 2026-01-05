@@ -13,13 +13,11 @@ export type UsedKeys = {
 
 export { MAX_CHALLENGES, WORD_LENGTH };
 
-export const getWord = () => {
-    const randomIndex = Math.floor(Math.random() * WORDS.length);
-    return WORDS[randomIndex];
-};
+// Removed getWord as it is now handled by WordService
+// export const getWord = () => { ... }
 
-export const isWordInList = (word: string) => {
-    return WORDS.includes(word.toUpperCase());
+export const isWordInList = (word: string, list: string[]): boolean => {
+    return list.includes(word.toUpperCase());
 };
 
 export const checkGuess = (guess: string, solution: string): LetterStatus[] => {

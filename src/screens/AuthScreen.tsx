@@ -27,6 +27,20 @@ const AuthScreen = () => {
         }
 
         setLoading(true);
+
+        // Check if username is already taken
+        const { data: existingUser, error: checkError } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('username', username)
+            .single();
+
+        if (existingUser) {
+            setLoading(false);
+            Alert.alert('Username Taken', 'This username is already taken. Please choose another one.');
+            return;
+        }
+
         const { error } = await supabase.auth.signUp({
             email,
             password,
@@ -37,14 +51,21 @@ const AuthScreen = () => {
             },
         });
 
-        if (error) Alert.alert('Error', error.message);
-        else Alert.alert('Success', 'Check your email for the confirmation link!');
+        if (error) {
+            if (error.message.includes('User already registered') || error.message.includes('unique constraint')) {
+                Alert.alert('Account Exists', 'This email is already registered. Please login instead.');
+            } else {
+                Alert.alert('Error', error.message);
+            }
+        } else {
+            Alert.alert('Success', 'Check your email for the confirmation link!');
+        }
         setLoading(false);
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>WORDLE</Text>
+            <Text style={styles.title}>Lettr</Text>
             <View style={styles.form}>
                 <TextInput
                     style={styles.input}

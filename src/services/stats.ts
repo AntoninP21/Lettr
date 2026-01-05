@@ -6,6 +6,7 @@ export interface UserStats {
     current_streak: number;
     max_streak: number;
     distribution: number[];
+    last_played_at?: string;
 }
 
 export const fetchUserStats = async (userId: string): Promise<UserStats | null> => {
