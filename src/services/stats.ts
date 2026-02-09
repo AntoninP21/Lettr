@@ -14,9 +14,10 @@ export const fetchUserStats = async (userId: string): Promise<UserStats | null> 
         .from('user_stats')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
     if (error) {
+        // Only log real errors, not "no rows found" (which maybeSingle handles by returning null)
         console.error('Error fetching stats:', error);
         return null;
     }
@@ -25,32 +26,80 @@ export const fetchUserStats = async (userId: string): Promise<UserStats | null> 
 
 export const updateUserStats = async (userId: string, won: boolean, guessCount: number) => {
     const currentStats = await fetchUserStats(userId);
-    if (!currentStats) return;
+
+    const defaults: UserStats = {
+        games_played: 0,
+        games_won: 0,
+        current_streak: 0,
+        max_streak: 0,
+        distribution: [0, 0, 0, 0, 0, 0],
+        last_played_at: new Date().toISOString(),
+    };
+
+    const statsToUpdate = currentStats || defaults;
 
     const newStats: any = {
-        games_played: currentStats.games_played + 1,
-        games_won: currentStats.games_won + (won ? 1 : 0),
-        current_streak: won ? currentStats.current_streak + 1 : 0,
+        games_played: statsToUpdate.games_played + 1,
+        games_won: statsToUpdate.games_won + (won ? 1 : 0),
+        current_streak: won ? statsToUpdate.current_streak + 1 : 0,
         max_streak: won
-            ? Math.max(currentStats.max_streak, currentStats.current_streak + 1)
-            : currentStats.max_streak,
+            ? Math.max(statsToUpdate.max_streak, statsToUpdate.current_streak + 1)
+            : statsToUpdate.max_streak,
         last_played_at: new Date().toISOString(),
     };
 
     if (won && guessCount >= 1 && guessCount <= 6) {
-        const distribution = [...currentStats.distribution];
+        const distribution = [...statsToUpdate.distribution];
         // Distribution is array 0-index for guess count 1-6 but often mapped.
         // Let's assume index 0 = 1 guess, index 5 = 6 guesses.
         distribution[guessCount - 1] = (distribution[guessCount - 1] || 0) + 1;
         newStats.distribution = distribution;
+    } else {
+        newStats.distribution = statsToUpdate.distribution;
     }
 
-    const { error } = await supabase
-        .from('user_stats')
-        .update(newStats)
-        .eq('user_id', userId);
+    if (currentStats) {
+        const { error } = await supabase
+            .from('user_stats')
+            .update(newStats)
+            .eq('user_id', userId);
 
-    if (error) console.error('Error updating stats:', error);
+        if (error) console.error('Error updating stats:', error);
+    } else {
+        // Check if profile exists before inserting stats
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (!profile) {
+            console.log('Profile missing for user, creating one...');
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const username = user.user_metadata?.username || user.email?.split('@')[0] || 'User';
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .insert({
+                        id: userId,
+                        username: username,
+                        // avatar_url could be added here if available
+                    });
+
+                if (profileError) {
+                    console.error('Error creating missing profile:', profileError);
+                    // If profile creation fails, stats insertion will likely fail too, but let's try anyway or return?
+                    // We'll proceed to try inserting stats, it might fail with same error but we logged the cause.
+                }
+            }
+        }
+
+        const { error } = await supabase
+            .from('user_stats')
+            .insert({ user_id: userId, ...newStats });
+
+        if (error) console.error('Error creating stats:', error);
+    }
 };
 
 export const fetchLeaderboard = async () => {
