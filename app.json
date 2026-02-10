@@ -21,10 +21,19 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.wordleclone"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "97acc412-9285-4884-b5bc-8ddf938761f6"
+      }
+    },
+    "plugins": [
+      "@react-native-google-signin/google-signin"
+    ]
   }
 }

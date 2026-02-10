@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { GoogleSignin, GoogleSigninButton, statusCodes } from '@react-native-google-signin/google-signin';
 import { colors } from '../constants/colors';
 import { supabase } from '../lib/supabase';
 
@@ -8,6 +9,13 @@ const AuthScreen = () => {
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        GoogleSignin.configure({
+            scopes: ['email', 'profile'],
+            webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com', // Get this from Google Cloud Console
+        });
+    }, []);
 
     const signInWithEmail = async () => {
         setLoading(true);
@@ -18,6 +26,43 @@ const AuthScreen = () => {
 
         if (error) Alert.alert('Error', error.message);
         setLoading(false);
+    };
+
+    const signInWithGoogle = async () => {
+        setLoading(true);
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+
+            if (userInfo.data?.idToken) {
+                const { data, error } = await supabase.auth.signInWithIdToken({
+                    provider: 'google',
+                    token: userInfo.data.idToken,
+                });
+
+                if (error) {
+                    Alert.alert('Error', error.message);
+                } else {
+                    // Success is handled by AuthContext
+                }
+            } else {
+                throw new Error('No ID token present!');
+            }
+        } catch (error: any) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+                // user cancelled the login flow
+            } else if (error.code === statusCodes.IN_PROGRESS) {
+                // operation (e.g. sign in) is in progress already
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                // play services not available or outdated
+                Alert.alert('Error', 'Google Play Services not available');
+            } else {
+                Alert.alert('Error', error.toString());
+                console.error(error);
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     const signUpWithEmail = async () => {
@@ -67,6 +112,19 @@ const AuthScreen = () => {
         <View style={styles.container}>
             <Text style={styles.title}>Lettr</Text>
             <View style={styles.form}>
+                <GoogleSigninButton
+                    size={GoogleSigninButton.Size.Wide}
+                    color={GoogleSigninButton.Color.Dark}
+                    onPress={signInWithGoogle}
+                    disabled={loading}
+                    style={{ width: '100%', height: 48, marginBottom: 20 }}
+                />
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+                    <View style={{ flex: 1, height: 1, backgroundColor: colors.grey }} />
+                    <Text style={{ color: colors.grey, marginHorizontal: 10 }}>OR</Text>
+                    <View style={{ flex: 1, height: 1, backgroundColor: colors.grey }} />
+                </View>
+
                 <TextInput
                     style={styles.input}
                     placeholder="Username (for Signup)"

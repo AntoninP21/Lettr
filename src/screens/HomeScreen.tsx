@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
+import { supabase } from '../lib/supabase';
 import { colors } from '../constants/colors';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,6 +9,33 @@ const HomeScreen = ({ navigation }: any) => {
 
     const handleLogout = async () => {
         await signOut();
+    };
+
+    const handleDeleteAccount = async () => {
+        Alert.alert(
+            "Delete Account",
+            "Are you sure you want to delete your account? This action cannot be undone.",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            const { error } = await supabase.rpc('delete_user');
+                            if (error) throw error;
+                            await signOut();
+                        } catch (error) {
+                            console.error('Error deleting account:', error);
+                            Alert.alert("Error", "Failed to delete account. Please try again.");
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     return (
@@ -34,6 +62,13 @@ const HomeScreen = ({ navigation }: any) => {
                 onPress={handleLogout}
             >
                 <Text style={[styles.buttonText, styles.logoutButtonText]}>LOGOUT</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={[styles.button, styles.deleteButton]}
+                onPress={handleDeleteAccount}
+            >
+                <Text style={[styles.buttonText, styles.deleteButtonText]}>DELETE ACCOUNT</Text>
             </TouchableOpacity>
         </View>
     );
@@ -87,6 +122,15 @@ const styles = StyleSheet.create({
     },
     logoutButtonText: {
         color: colors.grey,
+        fontSize: 14,
+        letterSpacing: 1,
+    },
+    deleteButton: {
+        marginTop: 10,
+        backgroundColor: 'transparent',
+    },
+    deleteButtonText: {
+        color: '#FF4444',
         fontSize: 14,
         letterSpacing: 1,
     },
