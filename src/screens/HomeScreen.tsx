@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { colors } from '../constants/colors';
 import { useAuth } from '../context/AuthContext';
@@ -27,6 +28,8 @@ const HomeScreen = ({ navigation }: any) => {
                         try {
                             const { error } = await supabase.rpc('delete_user');
                             if (error) throw error;
+
+                            await AsyncStorage.clear();
                             await signOut();
                         } catch (error) {
                             console.error('Error deleting account:', error);

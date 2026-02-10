@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Grid from '../components/Grid';
 import Keyboard from '../components/Keyboard';
@@ -17,6 +17,7 @@ const GameScreen = () => {
     const [validWords, setValidWords] = useState<string[]>([]);
     const [loadingWords, setLoadingWords] = useState(true);
     const [hasPlayedToday, setHasPlayedToday] = useState(false);
+    const [showGridResult, setShowGridResult] = useState(false);
 
     // UI State
     const [toastMessage, setToastMessage] = useState('');
@@ -63,10 +64,10 @@ const GameScreen = () => {
     );
 
     useEffect(() => {
-        if (!solution || hasPlayedToday) return;
+        if (loadingWords || !solution || hasPlayedToday) return;
 
         if (isCorrect) {
-            if (userId) {
+            if (userId && !hasPlayedToday) {
                 updateUserStats(userId, true, turn);
                 setHasPlayedToday(true);
             }
@@ -81,7 +82,7 @@ const GameScreen = () => {
             // Use Toast instead of Modal for loss
             setTimeout(() => showToast(`Game Over! The word was ${solution}`), 1000);
         }
-    }, [isCorrect, turn, solution, userId, hasPlayedToday]);
+    }, [isCorrect, turn, solution, userId, hasPlayedToday, loadingWords]);
 
     if (loadingWords || !solution) {
         return (
@@ -106,7 +107,7 @@ const GameScreen = () => {
     // Let's modify the condition slightly: if Toast is visible, don't show the restricted view yet?
     // Or just overlay the Toast on the restricted view.
 
-    if (hasPlayedToday) {
+    if (hasPlayedToday && !showGridResult) {
         return (
             <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                 <Text style={styles.title}>Lettr</Text>
@@ -116,12 +117,19 @@ const GameScreen = () => {
                 <Text style={{ color: colors.grey, fontSize: 16, marginTop: 10 }}>
                     Come back tomorrow for a new word!
                 </Text>
+
+                <TouchableOpacity
+                    style={styles.seeGridButton}
+                    onPress={() => setShowGridResult(true)}
+                >
+                    <Text style={styles.seeGridButtonText}>SEE GRID</Text>
+                </TouchableOpacity>
                 <Toast
                     message={toastMessage}
                     visible={toastVisible}
                     onHide={() => setToastVisible(false)}
                 />
-            </SafeAreaView>
+            </SafeAreaView >
         );
     }
 
@@ -129,11 +137,19 @@ const GameScreen = () => {
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
             <View style={styles.header}>
                 <Text style={styles.title}>Lettr</Text>
+                {hasPlayedToday && (
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={() => setShowGridResult(false)}
+                    >
+                        <Text style={styles.backButtonText}>BACK</Text>
+                    </TouchableOpacity>
+                )}
             </View>
 
             <View style={styles.gameContainer}>
                 <Grid currentGuess={currentGuess} guesses={guesses} turn={turn} />
-                <Keyboard onKeyPressed={handleKeyup} usedKeys={usedKeys} />
+                {!hasPlayedToday && <Keyboard onKeyPressed={handleKeyup} usedKeys={usedKeys} />}
             </View>
 
             <Toast
@@ -167,6 +183,29 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'space-between',
+    },
+    seeGridButton: {
+        marginTop: 30,
+        backgroundColor: colors.primary,
+        paddingVertical: 12,
+        paddingHorizontal: 30,
+        borderRadius: 25,
+    },
+    seeGridButtonText: {
+        color: colors.white,
+        fontSize: 16,
+        fontWeight: 'bold',
+        letterSpacing: 1,
+    },
+    backButton: {
+        position: 'absolute',
+        left: 20,
+        top: 25, // Adjusted for header padding
+    },
+    backButtonText: {
+        color: colors.grey,
+        fontSize: 14,
+        fontWeight: 'bold',
     },
 });
 

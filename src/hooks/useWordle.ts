@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { checkGuess, Guess, isWordInList, LetterStatus, MAX_CHALLENGES, UsedKeys, WORD_LENGTH } from '../utils/wordle';
 
 const useWordle = (solution: string, validWords: string[], onMessage: (msg: string) => void) => {
@@ -9,6 +10,56 @@ const useWordle = (solution: string, validWords: string[], onMessage: (msg: stri
     const [history, setHistory] = useState<string[]>([]); // Raw string guesses
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
     const [usedKeys, setUsedKeys] = useState<UsedKeys>({});
+    const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
+    // Load game state on mount
+    useEffect(() => {
+        if (!solution) return;
+
+        const loadGameState = async () => {
+            try {
+                const savedState = await AsyncStorage.getItem('gameState');
+                if (savedState) {
+                    const parsedState = JSON.parse(savedState);
+                    // Check if the saved state is for the current solution
+                    if (parsedState.solution === solution) {
+                        setTurn(parsedState.turn);
+                        setGuesses(parsedState.guesses);
+                        setHistory(parsedState.history);
+                        setIsCorrect(parsedState.isCorrect);
+                        setUsedKeys(parsedState.usedKeys);
+                    }
+                }
+            } catch (error) {
+                console.log('Error loading game state:', error);
+            } finally {
+                setIsLoaded(true);
+            }
+        };
+        loadGameState();
+    }, [solution]);
+
+    // Save game state whenever relevant state changes
+    useEffect(() => {
+        if (!isLoaded || !solution) return;
+
+        const saveGameState = async () => {
+            try {
+                const stateToSave = {
+                    solution,
+                    turn,
+                    guesses,
+                    history,
+                    isCorrect,
+                    usedKeys,
+                };
+                await AsyncStorage.setItem('gameState', JSON.stringify(stateToSave));
+            } catch (error) {
+                console.log('Error saving game state:', error);
+            }
+        };
+        saveGameState();
+    }, [turn, guesses, history, isCorrect, usedKeys, solution, isLoaded]);
 
     const formatGuess = (): Guess => {
         const statusArray = checkGuess(currentGuess, solution);
@@ -53,6 +104,10 @@ const useWordle = (solution: string, validWords: string[], onMessage: (msg: stri
     };
 
     const handleKeyup = (key: string) => {
+        if (isCorrect) {
+            return;
+        }
+
         if (key === 'ENTER') {
             // Only add guess if turn is less than 5
             if (turn > MAX_CHALLENGES) {
