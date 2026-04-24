@@ -9,6 +9,7 @@ import { colors } from './src/constants/colors';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import LeaderboardScreen from './src/screens/LeaderboardScreen';
 import AddFriendScreen from './src/screens/AddFriendScreen';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 const Stack = createNativeStackNavigator();
 
@@ -43,11 +44,13 @@ const Navigation = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <StatusBar style="light" />
-        <Navigation />
-      </NavigationContainer>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <NavigationContainer>
+          <StatusBar style="light" />
+          <Navigation />
+        </NavigationContainer>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
