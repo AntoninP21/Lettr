@@ -1,0 +1,55 @@
+# Ce fichier définit une pipeline d'intégration continue (CI) pour le projet via GitHub Actions.
+# L'objectif est de vérifier automatiquement que le code fonctionne (en passant les tests) à chaque modification importante.
+
+name: CI - Tests et Validation
+
+# La section "on" définit les déclencheurs (triggers) de ce workflow.
+# Ici, le workflow s'exécutera automatiquement lors d'un "push" (envoi de code) 
+# ou d'une "pull_request" (demande d'intégration) ciblée sur la branche principale "main".
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Un workflow est constitué d'un ou plusieurs "jobs" (tâches) qui s'exécutent en parallèle par défaut.
+jobs:
+  # Nous définissons un job nommé "build-and-test"
+  build-and-test:
+    # "runs-on" spécifie l'environnement sur lequel ce job va s'exécuter.
+    # Nous utilisons "ubuntu-latest", qui est la dernière version stable d'Ubuntu fournie par GitHub.
+    # C'est un environnement Linux standard, parfait pour des projets Node.js.
+    runs-on: ubuntu-latest
+
+    # Les "steps" (étapes) sont exécutées séquentiellement dans le même environnement.
+    steps:
+      # Étape 1 : Récupérer le code source du dépôt.
+      # Nous utilisons une action officielle de GitHub (actions/checkout) pour cloner le code
+      # sur la machine virtuelle afin que les étapes suivantes puissent y accéder.
+      - name: Récupération du code source
+        uses: actions/checkout@v4
+
+      # Étape 2 : Configurer l'environnement Node.js.
+      # Nous utilisons l'action officielle "setup-node" pour installer une version spécifique de Node.js.
+      # Ici, on utilise la version 20 (version LTS - Long Term Support) pour garantir la stabilité.
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # L'option "cache: 'npm'" permet d'accélérer les futurs workflows en mettant en cache
+          # les dépendances téléchargées, évitant ainsi de les re-télécharger à chaque fois.
+          cache: 'npm'
+
+      # Étape 3 : Installation des dépendances du projet.
+      # Nous exécutons la commande "npm install" de manière propre avec "--legacy-peer-deps"
+      # pour reproduire l'environnement de développement exact et contourner les éventuels
+      # conflits de dépendances de peer-dependencies (comme pour react-test-renderer).
+      - name: Installation des dépendances (npm install)
+        run: npm install --legacy-peer-deps
+
+      # Étape 4 : Exécution des tests unitaires.
+      # C'est l'étape finale de validation. Nous lançons "npm test" qui va utiliser Jest
+      # (configuré précédemment) pour vérifier que la logique métier de notre application est intacte.
+      # Si un test échoue, cette étape échouera, et la pipeline CI sera marquée comme "en erreur".
+      - name: Exécution des tests unitaires (npm test)
+        run: npm test
