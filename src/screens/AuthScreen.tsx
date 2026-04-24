@@ -119,11 +119,6 @@ const AuthScreen = () => {
                     disabled={loading}
                     style={{ width: '100%', height: 48, marginBottom: 20 }}
                 />
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-                    <View style={{ flex: 1, height: 1, backgroundColor: colors.grey }} />
-                    <Text style={{ color: colors.grey, marginHorizontal: 10 }}>OR</Text>
-                    <View style={{ flex: 1, height: 1, backgroundColor: colors.grey }} />
-                </View>
 
                 <TextInput
                     style={styles.input}
